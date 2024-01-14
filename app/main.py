@@ -1,7 +1,12 @@
 from typing import Union, Optional
 from fastapi import FastAPI
 
-from app.schemas import Recipe, RecipeCreate, RecipeSearchResults
+from app.schemas import (
+    Recipe,
+    RecipeCreate,
+    RecipeSearchResults,
+    RecipeUpdateRestricted,
+)
 
 app = FastAPI(title="Recipe API")
 
@@ -82,20 +87,19 @@ async def create_recipe(
     return new_recipe_entry
 
 
-@app.put("/recipes/{recipe_id}", status_code=200)
+@app.put("/recipes/", status_code=200)
 async def update_recipe(
     *,
-    recipe_id: int,
-    recipe_in: RecipeCreate,
+    recipe_update: RecipeUpdateRestricted,
 ) -> dict:
-    res = [recipe for recipe in RECIPES if recipe["id"] == recipe_id]
+    res = [recipe for recipe in RECIPES if recipe["id"] == recipe_update.id]
     if res:
         recipe = res[0]
-        recipe["label"] = recipe_in.label
-        recipe["source"] = recipe_in.source
-        recipe["url"] = recipe_in.url
+        recipe["label"] = recipe_update.label
+        recipe["source"] = recipe_update.source
+        recipe["url"] = recipe_update.url
 
-        return Recipe.model_validate(recipe)
+        return recipe
     return {"msg": "Recipe not found"}
 
 
@@ -109,5 +113,5 @@ async def delete_recipe(
         recipe = res[0]
         RECIPES.remove(recipe)
 
-        return {"msg": "Deleted!"}
+        return {"msg": "Deleted!", "data": recipe}
     return {"msg": "Recipe not found"}

@@ -18,3 +18,10 @@ class RecipeCreate(BaseModel):
     source: str
     url: HttpUrl
     submitter_id: int
+
+
+class RecipeUpdateRestricted(BaseModel):
+    id: int
+    label: str
+    source: str
+    url: HttpUrl
