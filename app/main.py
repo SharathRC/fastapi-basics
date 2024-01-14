@@ -1,5 +1,7 @@
 from typing import Union, Optional
-from fastapi import FastAPI
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.templating import Jinja2Templates
 
 from app.schemas import (
     Recipe,
@@ -7,6 +9,9 @@ from app.schemas import (
     RecipeSearchResults,
     RecipeUpdateRestricted,
 )
+
+BASE_PATH = Path(__file__).resolve().parent
+TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 
 app = FastAPI(title="Recipe API")
 
@@ -40,15 +45,24 @@ RECIPES = [
 
 
 @app.get("/", status_code=200)
-async def root() -> dict:
-    return {"msg": "See recipes here"}
+async def root(request: Request) -> dict:
+    return TEMPLATES.TemplateResponse(
+        name="index.html",
+        context={
+            "request": request,
+            "recipes": RECIPES,
+        },
+    )
 
 
 @app.get("/recipes/{recipe_id}", status_code=200)
 async def fetch_recipe(*, recipe_id: int) -> dict:
     res = [recipe for recipe in RECIPES if recipe["id"] == recipe_id]
-    if res:
-        return res[0]
+    if not res:
+        raise HTTPException(
+            status_code=404, detail=f"Recipe with id: {recipe_id} not found"
+        )
+    return res[0]
 
 
 @app.get("/search/", status_code=200, response_model=RecipeSearchResults)
@@ -87,31 +101,36 @@ async def create_recipe(
     return new_recipe_entry
 
 
-@app.put("/recipes/", status_code=200)
+@app.put("/recipes/", status_code=200, response_model=Recipe)
 async def update_recipe(
     *,
     recipe_update: RecipeUpdateRestricted,
 ) -> dict:
     res = [recipe for recipe in RECIPES if recipe["id"] == recipe_update.id]
-    if res:
-        recipe = res[0]
-        recipe["label"] = recipe_update.label
-        recipe["source"] = recipe_update.source
-        recipe["url"] = recipe_update.url
+    if not res:
+        raise HTTPException(
+            status_code=404, detail=f"Recipe with id: {recipe_update.id} not found"
+        )
+    recipe = res[0]
+    recipe["label"] = recipe_update.label
+    recipe["source"] = recipe_update.source
+    recipe["url"] = recipe_update.url
 
-        return recipe
-    return {"msg": "Recipe not found"}
+    return recipe
 
 
-@app.delete("/recipes/{recipe_id}", status_code=200)
+@app.delete("/recipes/{recipe_id}", status_code=200, response_model=Recipe)
 async def delete_recipe(
     *,
     recipe_id: int,
 ) -> dict:
     res = [recipe for recipe in RECIPES if recipe["id"] == recipe_id]
-    if res:
-        recipe = res[0]
-        RECIPES.remove(recipe)
+    if not res:
+        raise HTTPException(
+            status_code=404, detail=f"Recipe with id: {recipe_id} not found"
+        )
 
-        return {"msg": "Deleted!", "data": recipe}
-    return {"msg": "Recipe not found"}
+    recipe = res[0]
+    RECIPES.remove(recipe)
+
+    return recipe
