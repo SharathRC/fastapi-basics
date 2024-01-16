@@ -26,7 +26,9 @@ class RecipeInDBBase(RecipeBase):
     submitter_id: int
 
     class Config:
-        orm_mode = True  # tells pydantic to check model (attributes) also as non-dict
+        from_attributes = (
+            True  # tells pydantic to check model (attributes) also as non-dict
+        )
 
 
 # Properties to return to client
