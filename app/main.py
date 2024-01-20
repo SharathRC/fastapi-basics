@@ -1,6 +1,6 @@
 from pathlib import Path
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends
+from fastapi import FastAPI, APIRouter, Request, Depends
 from fastapi.templating import Jinja2Templates
 
 from app import crud

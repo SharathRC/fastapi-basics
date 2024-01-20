@@ -1,8 +1,6 @@
-from typing import Union, Optional
-from pathlib import Path
+from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, HTTPException, Query, Depends
-from fastapi.templating import Jinja2Templates
 
 from app.schemas.recipe import (
     Recipe,
