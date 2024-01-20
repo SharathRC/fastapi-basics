@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import crud
 from app.api import api_router, deps
+from app.config import settings
 
 
 BASE_PATH = Path(__file__).resolve().parent
@@ -30,4 +31,4 @@ async def root(
 
 
 app.include_router(root_router)
-app.include_router(api_router, prefix="/api")
+app.include_router(api_router, prefix=settings.API_VERSION_STR)
