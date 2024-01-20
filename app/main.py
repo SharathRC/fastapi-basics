@@ -10,7 +10,7 @@ from app.schemas.recipe import (
     RecipeSearchResults,
 )
 from app import crud
-from app import deps
+from app.api import deps
 
 
 BASE_PATH = Path(__file__).resolve().parent
