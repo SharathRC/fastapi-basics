@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import crud
 from app.api import api_router, deps
-from app.config import settings
+from app.core.config import settings
 
 
 BASE_PATH = Path(__file__).resolve().parent
