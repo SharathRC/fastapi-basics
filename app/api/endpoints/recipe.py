@@ -4,11 +4,13 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 
 from app.schemas.recipe import (
     Recipe,
+    RecipeBase,
     RecipeCreate,
     RecipeSearchResults,
 )
 from app import crud
 from app.api import deps
+from app.models.user import User
 
 router = APIRouter()
 
@@ -49,10 +51,17 @@ async def search_recipes(
 @router.post("/", status_code=201, response_model=Recipe)
 async def create_recipe(
     *,
-    recipe_in: RecipeCreate,
+    recipe_in: RecipeBase,
     db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
 ) -> dict:
-    recipe = crud.recipe.create(db=db, obj_in=recipe_in)
+    new_recipe = RecipeCreate(
+        label=recipe_in.label,
+        source=recipe_in.source,
+        url=recipe_in.url,
+        submitter_id=current_user.id,
+    )
+    recipe = crud.recipe.create(db=db, obj_in=new_recipe)
 
     return recipe
 
