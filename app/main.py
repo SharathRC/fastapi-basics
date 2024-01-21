@@ -11,8 +11,9 @@ from app.core.config import settings
 BASE_PATH = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 
-root_router = APIRouter()
 app = FastAPI(title="Recipe API")
+
+root_router = APIRouter()
 
 
 @root_router.get("/", status_code=200)
