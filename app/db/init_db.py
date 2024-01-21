@@ -2,16 +2,45 @@ import logging
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
-from app.db import base  # noqa: F401
-from app.recipe_data import RECIPES
+from app.db import (
+    base,
+)  # noqa: F401 # import necessary so that all models are pre-initialized
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
-FIRST_SUPERUSER = "admin@recipeapi.com"
 
 # make sure all SQL Alchemy models are imported (app.db.base) before initializing DB
 # otherwise, SQL Alchemy might fail to initialize relationships properly
 # for more details: https://github.com/tiangolo/full-stack-fastapi-postgresql/issues/28
+
+FIRST_SUPERUSER = "admin@recipeapi.com"
+
+RECIPES = [
+    {
+        "id": 0,
+        "label": "Chicken",
+        "source": "Web",
+        "url": "https://google.com",
+    },
+    {
+        "id": 1,
+        "label": "Mutton",
+        "source": "Web",
+        "url": "https://google.com",
+    },
+    {
+        "id": 2,
+        "label": "Duck",
+        "source": "Web",
+        "url": "https://google.com",
+    },
+    {
+        "id": 3,
+        "label": "Goose",
+        "source": "Web",
+        "url": "https://google.com",
+    },
+]
 
 
 def init_db(db: Session) -> None:
@@ -27,6 +56,7 @@ def init_db(db: Session) -> None:
                 last_name="Super",
                 email=FIRST_SUPERUSER,
                 is_superuser=True,
+                password=settings.FIRST_SUPERUSER_PW,
             )
             user = crud.user.create(db, obj_in=user_in)  # noqa: F841
         else:
