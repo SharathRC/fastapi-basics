@@ -7,3 +7,5 @@ SQLAlchemy==2.0.25
 alembic==1.13.1
 pydantic[email]
 pydantic-settings==2.1.0
+passlib==1.7.4
+python-jose==3.3.0
