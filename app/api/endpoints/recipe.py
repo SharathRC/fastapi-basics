@@ -10,6 +10,7 @@ from app.schemas.recipe import (
     RecipeBase,
     RecipeCreate,
     RecipeSearchResults,
+    RecipeUpdateRestricted,
 )
 from app import crud
 from app.api import deps
@@ -74,23 +75,36 @@ async def create_recipe(
     return recipe
 
 
-# @router.put("/", status_code=200, response_model=Recipe)
-# async def update_recipe(
-#     *,
-#     recipe_update: RecipeUpdateRestricted,
-#     db: Session = Depends(deps.get_db),
-# ) -> dict:
-#     res = [recipe for recipe in RECIPES if recipe["id"] == recipe_update.id]
-#     if not res:
-#         raise HTTPException(
-#             status_code=404, detail=f"Recipe with id: {recipe_update.id} not found"
-#         )
-#     recipe = res[0]
-#     recipe["label"] = recipe_update.label
-#     recipe["source"] = recipe_update.source
-#     recipe["url"] = recipe_update.url
+@router.put("/", status_code=200, response_model=Recipe)
+async def update_recipe(
+    *,
+    recipe_update: RecipeUpdateRestricted,
+    db: Session = Depends(deps.get_db),
+    user: User = Depends(deps.get_current_user),
+) -> dict:
+    updatable_recipe = crud.recipe.get(
+        db=db,
+        id=recipe_update.id,
+    )
 
-#     return recipe
+    if not updatable_recipe:
+        raise HTTPException(
+            status_code=400, detail=f"Recipe with id: {recipe_update.id} not found!"
+        )
+
+    if updatable_recipe.submitter_id != user.id:
+        raise HTTPException(
+            status_code=405,
+            detail=f"Recipe with id: {recipe_update.id} doesn't belong to logged in user",
+        )
+
+    updated_recipe = crud.recipe.update(
+        db=db,
+        db_obj=updatable_recipe,
+        obj_in=recipe_update,
+    )
+
+    return updated_recipe
 
 
 @router.get("/ideas/async")
@@ -107,13 +121,6 @@ async def fetch_ideas_async(
         ]
     )
     return dict(zip(RECIPE_SUBREDDITS, results))
-
-
-# @router.get("/ideas/")
-# def fetch_ideas(reddit_client: RedditClient = Depends(deps.get_reddit_client)) -> dict:
-#     return {
-#         key: reddit_client.get_reddit_top(subreddit=key) for key in RECIPE_SUBREDDITS
-#     }
 
 
 # @router.delete("/{recipe_id}", status_code=200, response_model=Recipe)
