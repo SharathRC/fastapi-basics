@@ -107,6 +107,34 @@ async def update_recipe(
     return updated_recipe
 
 
+@router.delete("/{recipe_id}", status_code=200, response_model=Recipe)
+async def delete_recipe(
+    *,
+    recipe_id: int,
+    db: Session = Depends(deps.get_db),
+    user: User = Depends(deps.get_current_user),
+) -> dict:
+    recipe = crud.recipe.get(
+        db=db,
+        id=recipe_id,
+    )
+
+    if not recipe:
+        raise HTTPException(
+            status_code=400, detail=f"Recipe with id: {recipe_id} not found!"
+        )
+
+    if recipe.submitter_id != user.id:
+        raise HTTPException(
+            status_code=405,
+            detail=f"Recipe with id: {recipe_id} doesn't belong to logged in user",
+        )
+
+    crud.recipe.remove(db=db, id=recipe_id)
+
+    return recipe
+
+
 @router.get("/ideas/async")
 async def fetch_ideas_async(
     reddit_client: RedditClient = Depends(deps.get_reddit_client),
@@ -121,21 +149,3 @@ async def fetch_ideas_async(
         ]
     )
     return dict(zip(RECIPE_SUBREDDITS, results))
-
-
-# @router.delete("/{recipe_id}", status_code=200, response_model=Recipe)
-# async def delete_recipe(
-#     *,
-#     recipe_id: int,
-#     db: Session = Depends(deps.get_db),
-# ) -> dict:
-#     res = [recipe for recipe in RECIPES if recipe["id"] == recipe_id]
-#     if not res:
-#         raise HTTPException(
-#             status_code=404, detail=f"Recipe with id: {recipe_id} not found"
-#         )
-
-#     recipe = res[0]
-#     RECIPES.remove(recipe)
-
-#     return recipe
