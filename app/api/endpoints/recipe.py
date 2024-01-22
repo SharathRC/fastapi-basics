@@ -1,7 +1,10 @@
 from typing import Optional
+import asyncio
 from sqlalchemy.orm import Session
+import httpx
 from fastapi import APIRouter, HTTPException, Query, Depends
 
+from app.clients.reddit import RedditClient
 from app.schemas.recipe import (
     Recipe,
     RecipeBase,
@@ -11,6 +14,9 @@ from app.schemas.recipe import (
 from app import crud
 from app.api import deps
 from app.models.user import User
+
+
+RECIPE_SUBREDDITS = ["recipes", "easyrecipes", "TopSecretRecipes"]
 
 router = APIRouter()
 
@@ -53,7 +59,9 @@ async def create_recipe(
     *,
     recipe_in: RecipeBase,
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    current_user: User = Depends(
+        deps.get_current_user
+    ),  # allow only if a user is logged-in
 ) -> dict:
     new_recipe = RecipeCreate(
         label=recipe_in.label,
@@ -83,6 +91,29 @@ async def create_recipe(
 #     recipe["url"] = recipe_update.url
 
 #     return recipe
+
+
+@router.get("/ideas/async")
+async def fetch_ideas_async(
+    reddit_client: RedditClient = Depends(deps.get_reddit_client),
+    user: User = Depends(
+        deps.get_current_active_superuser
+    ),  # allow only if current user is superuser
+) -> dict:
+    results = await asyncio.gather(
+        *[
+            reddit_client.get_reddit_top_async(subreddit=subreddit)
+            for subreddit in RECIPE_SUBREDDITS
+        ]
+    )
+    return dict(zip(RECIPE_SUBREDDITS, results))
+
+
+# @router.get("/ideas/")
+# def fetch_ideas(reddit_client: RedditClient = Depends(deps.get_reddit_client)) -> dict:
+#     return {
+#         key: reddit_client.get_reddit_top(subreddit=key) for key in RECIPE_SUBREDDITS
+#     }
 
 
 # @router.delete("/{recipe_id}", status_code=200, response_model=Recipe)
