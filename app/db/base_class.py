@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.orm import as_declarative, declared_attr
 
 
 class_registry: Dict = {}
